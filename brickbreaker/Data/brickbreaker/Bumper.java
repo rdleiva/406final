@@ -6,7 +6,7 @@ import processing.core.PApplet;
 
 public class Bumper extends GraphicObject{
 	// how much does the bumper move left and right from a single button press
-	private float moveDist_ = 3.0f;
+	private float moveDist_ = 5.0f;
 	
 	
 	public Bumper(float x, float y, float z, float width, float height)

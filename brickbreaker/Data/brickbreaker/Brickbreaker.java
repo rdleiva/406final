@@ -4,8 +4,19 @@ import processing.core.PApplet;
 import processing.core.PImage;
 import processing.core.PShape;
 import processing.video.Capture;
+import skybox.Skybox;
+import sun.audio.AudioData;
+import sun.audio.AudioPlayer;
+import sun.audio.AudioStream;
+import sun.audio.ContinuousAudioDataStream;
+import processing.core.PGraphics;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 //	In 3D, a lot of the things we had to care about in 2D don't need to be
 //	defined explicitly anymore, but rather are going to be defined implicitly
@@ -97,6 +108,8 @@ public class Brickbreaker extends PApplet
 	 */								// 150
 	private final float PLANE_WIDTH = 150.f, PLANE_HEIGHT = 50.f;
 	
+	/**	Dimensions of camera plane
+	 */		
 	private final float CAM_WIDTH = 50.f, CAM_HEIGHT = 50.f;
 	
 	private float XMIN = -PLANE_WIDTH/2, YMIN = -PLANE_HEIGHT/2, XMAX = PLANE_WIDTH/2, YMAX = PLANE_HEIGHT/2;
@@ -140,6 +153,20 @@ public class Brickbreaker extends PApplet
 	//webcam 
 	Capture cam;
 	
+	private final boolean skyboxyes_ = true;
+
+	/** Skybox variable
+	 * 
+	 */
+	private Skybox skybox = null;
+	
+	/** Game over Image variable
+	 * 
+	 */
+	private PImage gameOver_;
+	
+	private boolean gameOver = false;
+	
 	public void settings() 
 	{
 		//Initial Scene configuration
@@ -148,8 +175,15 @@ public class Brickbreaker extends PApplet
 
 	public void setup() 
 	{
+		if (skyboxyes_)
+			skybox = new Skybox(loadImage("space.jpg"));
+		else
+			skybox = null;
+		
 		// web cam list
 		String[] cameras = Capture.list();
+		
+		music();
 		
 		if (cameras.length == 0) {
 			println("There are no cameras available for capture.");
@@ -175,6 +209,7 @@ public class Brickbreaker extends PApplet
 		//Image loading section
 		planeTexture_ = loadImage("space.jpg");
 		ballTexture_ = loadImage("ballpattern3.jpg");
+		gameOver_ = loadImage("gameover.jpg");
 		textureMode(NORMAL);
 		float azimuthStep = 2*PI/SPHERE_RES;
 		float elevationStep = PI/(SPHERE_RES+1);
@@ -214,7 +249,7 @@ public class Brickbreaker extends PApplet
 		}
 
 		ball_ = new Ball(0,0,blockSize/2, blockSize/2, blockSize/2);
-		bump_ = new Bumper(PLANE_WIDTH/3,0f,blockSize/2, blockSize/2, blockSize);
+		bump_ = new Bumper(PLANE_WIDTH/3,0f,blockSize/2, blockSize/2, blockSize*2f);
 		setupCamera_();
 		lastTime_ = millis();
 	}
@@ -238,8 +273,12 @@ public class Brickbreaker extends PApplet
 	}
 	
 	public void draw() {
+		
 
 		background(0);
+		
+		if (skybox != null)
+			hint(DISABLE_DEPTH_TEST);
 		
 		//	Move to the center of the image plane
 		translate(WINDOW_WIDTH/2, WINDOW_HEIGHT/2, 0);
@@ -261,6 +300,12 @@ public class Brickbreaker extends PApplet
 
 		// put the camera where we want it
 		translate(-50, 0, -20);
+		
+		if (skybox != null)
+		{
+			skybox.drawSkybox(this);
+			hint(ENABLE_DEPTH_TEST);
+		}
 
 
 		drawSurfaceAndBall_();
@@ -278,6 +323,28 @@ public class Brickbreaker extends PApplet
 			vertex(-CAM_WIDTH/2, CAM_HEIGHT/2, 0, 1, 0);
 		endShape(CLOSE); 
 		popMatrix();
+		
+		
+		// game over
+		if(gameOver) {
+			
+			pushMatrix();
+			translate(PLANE_WIDTH/3, 0, PLANE_HEIGHT/2);
+			rotateY(PI);
+			rotateZ(PI);
+			rotateY(-PI/4);
+
+			beginShape(QUADS);
+			texture(gameOver_);
+			vertex(-CAM_WIDTH, -CAM_HEIGHT, 0, 0, 0);
+			vertex(CAM_WIDTH, -CAM_HEIGHT, 0, 0, 1);
+			vertex(CAM_WIDTH, CAM_HEIGHT, 0, 1, 1);
+			vertex(-CAM_WIDTH, CAM_HEIGHT, 0, 1, 0);
+			endShape(CLOSE); 
+			popMatrix();
+			
+
+		}
 		
 		// show axes
 		if(transl_)
@@ -306,6 +373,7 @@ public class Brickbreaker extends PApplet
 
 		// update objects
 		update_();
+		
 	}
 
 	void drawSurfaceAndBall_(){
@@ -344,52 +412,6 @@ public class Brickbreaker extends PApplet
 		*/
 		popMatrix();
 	}
-
-	private void drawSphere_()
-	{
-		//	draw the central part
-		for (int i=0; i<SPHERE_RES-1; i++)
-		{
-			beginShape(TRIANGLE_STRIP);
-			texture(ballTexture_);
-			for (int j=0; j<SPHERE_RES; j++)
-			{
-				vertex(sphereVertex_[i][j][0], sphereVertex_[i][j][1], sphereVertex_[i][j][2], 
-						sphereVertex_[i][j][3], sphereVertex_[i][j][4]);
-				vertex(sphereVertex_[i+1][j][0], sphereVertex_[i+1][j][1], sphereVertex_[i+1][j][2],
-						sphereVertex_[i+1][j][3], sphereVertex_[i+1][j][4]);
-			}
-			//	close the strip (endShape(CLOSE) only works with a polygon
-			//	or curve shape, not with strips of quads/triangles
-			vertex(sphereVertex_[i][0][0], sphereVertex_[i][0][1], sphereVertex_[i][0][2],
-					sphereVertex_[i][0][3], sphereVertex_[i][0][4]);
-			vertex(sphereVertex_[i+1][0][0], sphereVertex_[i+1][0][1], sphereVertex_[i+1][0][2],
-					sphereVertex_[i+1][0][3], sphereVertex_[i+1][0][4]);
-			endShape();   			
-		}
-
-		//	draw the North cap
-		beginShape(TRIANGLE_FAN);
-		texture(ballTexture_);
-		vertex(0, 0, BALL_RADIUS, 0.5f, 1f);
-		for (int j=0; j<SPHERE_RES; j++)
-			vertex(sphereVertex_[0][j][0], sphereVertex_[0][j][1], sphereVertex_[0][j][2], 
-					sphereVertex_[0][j][3], sphereVertex_[0][j][4]);
-		vertex(sphereVertex_[0][0][0], sphereVertex_[0][0][1], sphereVertex_[0][0][2], 
-				sphereVertex_[0][0][3], sphereVertex_[0][0][4]);			
-		endShape();   					
-
-		//	draw the South cap
-		beginShape(TRIANGLE_FAN);
-		texture(ballTexture_);
-		vertex(0, 0, -BALL_RADIUS, 0.5f, 0f);
-		for (int j=SPHERE_RES-1; j>=0; j--)
-			vertex(sphereVertex_[SPHERE_RES-1][j][0], sphereVertex_[SPHERE_RES-1][j][1], sphereVertex_[SPHERE_RES-1][j][2], 
-					sphereVertex_[SPHERE_RES-1][j][3], sphereVertex_[SPHERE_RES-1][j][4]);
-		vertex(sphereVertex_[SPHERE_RES-1][SPHERE_RES-1][0], sphereVertex_[SPHERE_RES-1][SPHERE_RES-1][1], sphereVertex_[SPHERE_RES-1][SPHERE_RES-1][2], 
-				sphereVertex_[SPHERE_RES-1][SPHERE_RES-1][3], sphereVertex_[SPHERE_RES-1][SPHERE_RES-1][4]);			
-		endShape();   					
-	}
 	
 	private void update_() 
 	{
@@ -403,9 +425,16 @@ public class Brickbreaker extends PApplet
 		// check if ball is colliding with any bricks
 		for(int i = 0; i < brickList_.size();i++){
 			brickList_.get(i).update_(dt);
+			
+			if(brickList_.get(i).getX() >= bump_.getX()) {
+				gameOver = true;
+//				System.exit(0);
+			}
+			// brick collides with ball, if statement happens
 			// make list of bricks to remove
 			if(brickList_.get(i).getBoundingBox().isInside(ball_.getBoundingBox()))
 			{
+				blockHit();
 				toRemove_.add(brickList_.get(i));
 				// whichever axis difference is larger, is the one which caused the collision
 				// if ball collides with two bricks at once, it continues without stopping
@@ -436,6 +465,9 @@ public class Brickbreaker extends PApplet
 		}
 		
 		lastTime_ = time;
+		
+		
+		if(ball_.getX() >= bump_.getX()+10) gameOver = true; 
 		
 	}
 	
@@ -490,14 +522,81 @@ public class Brickbreaker extends PApplet
 				roll_ -= 0.05f;
 				break;
 			case ',':
-				bump_.moveLeft();
+				if(bump_.getY() <= PLANE_HEIGHT/3)
+					bump_.moveLeft();
 				break;
 			case '.':
-				bump_.moveRight();
+				if(bump_.getY() >= -PLANE_HEIGHT/3)
+					bump_.moveRight();
 				break;
+
 
 		}
 	}
+	
+	public void music() 
+    {       
+		
+		//Initializes all sound players/streamers/and data managers
+        AudioPlayer AP = AudioPlayer.player;
+        AudioStream AS;
+        AudioData AD;
+        // loop for continuous audio
+        ContinuousAudioDataStream loop = null;
+
+        try
+        {
+        	//tries to play selected music
+            InputStream test = new FileInputStream("menu.wav");
+            AS = new AudioStream(test);
+            AudioPlayer.player.start(AS);
+            AD = AS.getData();
+            loop = new ContinuousAudioDataStream(AD);
+
+        }
+        catch(FileNotFoundException e){
+        	//if music file isnt found
+            System.out.print(e.toString());
+        }
+        catch(IOException error)
+        {
+            System.out.print(error.toString());
+        }
+        //activates loop
+        AP.start(loop);
+
+    }
+	
+	public static void blockHit() 
+    {       
+    	//Initializes all sound players/streamers/and data managers
+        AudioPlayer AP = AudioPlayer.player;
+        AudioStream AS;
+        AudioData AD;
+        // loop for continuous audio
+        //ContinuousAudioDataStream loop = null;
+
+        try
+        {
+        	//tries to play selected music
+            InputStream test = new FileInputStream("blockHit.wav");
+            AS = new AudioStream(test);
+            AudioPlayer.player.start(AS);
+            AD = AS.getData();
+            //loop = new ContinuousAudioDataStream(AD);
+
+        }
+        catch(FileNotFoundException e){
+        	//if music file isnt found
+            System.out.print(e.toString());
+        }
+        catch(IOException error)
+        {
+            System.out.print(error.toString());
+        }
+        //activates loop
+        //AP.start(loop);
+    }
 	
 	public static void main(String _args[]) {
 		PApplet.main("brickbreaker.Data.brickbreaker.Brickbreaker");

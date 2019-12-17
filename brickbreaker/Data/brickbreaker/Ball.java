@@ -19,6 +19,7 @@ public class Ball extends GraphicObject
 									   0);
 		vx_ = 25.0f;
 		vy_ = 25.0f;
+
 	}
 
 	protected void draw_(PApplet app) {

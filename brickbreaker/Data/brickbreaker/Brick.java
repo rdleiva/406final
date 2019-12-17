@@ -9,7 +9,9 @@ public class Brick extends GraphicObject{
 									   y_ - width/2, y_ + width/2,
 									   z_ - width/2, z_+ width/2,
 									   0);
+		vx_ = .50f;
 	}
+
 	
 	public void draw_(PApplet app)
 	{
@@ -59,9 +61,13 @@ public class Brick extends GraphicObject{
 	}
 
 	public void update_(float dt) {
+		
+		x_ += vx_ * dt;
+		
 		boundingBox_ = new BoundingBox(x_ - width_/2, x_ + width_/2,
 									   y_ - width_/2, y_ + width_/2,
 									   z_ - width_/2, z_+ width_/2,
 									   0);
+		
 	}
 }
