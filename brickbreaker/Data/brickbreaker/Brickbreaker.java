@@ -1,8 +1,10 @@
-package brickbreaker;
+package brickbreaker.Data.brickbreaker;
 
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.core.PShape;
+import processing.video.Capture;
+
 import java.util.*;
 
 //	In 3D, a lot of the things we had to care about in 2D don't need to be
@@ -92,8 +94,10 @@ public class Brickbreaker extends PApplet
 	//	in a "better way," or at least one that is more extensible.
 	
 	/**	Dimensions of textured plane
-	 */
+	 */								// 150
 	private final float PLANE_WIDTH = 150.f, PLANE_HEIGHT = 50.f;
+	
+	private final float CAM_WIDTH = 50.f, CAM_HEIGHT = 50.f;
 	
 	private float XMIN = -PLANE_WIDTH/2, YMIN = -PLANE_HEIGHT/2, XMAX = PLANE_WIDTH/2, YMAX = PLANE_HEIGHT/2;
 	
@@ -133,6 +137,9 @@ public class Brickbreaker extends PApplet
 	
 	private boolean transl_ = false;
 	
+	//webcam 
+	Capture cam;
+	
 	public void settings() 
 	{
 		//Initial Scene configuration
@@ -141,6 +148,24 @@ public class Brickbreaker extends PApplet
 
 	public void setup() 
 	{
+		// web cam list
+		String[] cameras = Capture.list();
+		
+		if (cameras.length == 0) {
+			println("There are no cameras available for capture.");
+			exit();
+		} 
+		
+		println("Available cameras:");
+		for (int i = 0; i < cameras.length; i++) {
+			println("\t" + cameras[i]);
+		}
+		    
+		// The camera can be initialized directly using an 
+		// element from the array returned by list():
+		cam = new Capture(this, cameras[0]);  
+		cam.start();
+		
 //		cameraMode_ = CameraMode.ORTHOGRAPHIC_CAM;
 		cameraMode_ = CameraMode.NORMAL_PERSPECTIVE_CAM;
 //		cameraMode_ = CameraMode.WIDE_PERSPECTIVE_CAM;
@@ -148,7 +173,7 @@ public class Brickbreaker extends PApplet
 		ballTheta_ = 0;
 		
 		//Image loading section
-		planeTexture_ = loadImage("field.jpg");
+		planeTexture_ = loadImage("space.jpg");
 		ballTexture_ = loadImage("ballpattern3.jpg");
 		textureMode(NORMAL);
 		float azimuthStep = 2*PI/SPHERE_RES;
@@ -239,6 +264,20 @@ public class Brickbreaker extends PApplet
 
 
 		drawSurfaceAndBall_();
+		pushMatrix();
+		translate(-PLANE_WIDTH, 0, 32);
+		rotateY(PI/4);
+		//rotateX(-PI/6);
+		//rotateY(PI/3);
+
+		beginShape(QUADS);
+			texture(cam);
+			vertex(-CAM_WIDTH/2, -CAM_HEIGHT/2, 0, 0, 0);
+			vertex(CAM_WIDTH/2, -CAM_HEIGHT/2, 0, 0, 1);
+			vertex(CAM_WIDTH/2, CAM_HEIGHT/2, 0, 1, 1);
+			vertex(-CAM_WIDTH/2, CAM_HEIGHT/2, 0, 1, 0);
+		endShape(CLOSE); 
+		popMatrix();
 		
 		// show axes
 		if(transl_)
@@ -270,6 +309,11 @@ public class Brickbreaker extends PApplet
 	}
 
 	void drawSurfaceAndBall_(){
+		
+		if (cam.available()) {
+			cam.read();
+		}
+
 
 		pushMatrix();
 		noStroke();
@@ -285,6 +329,8 @@ public class Brickbreaker extends PApplet
 			vertex(PLANE_WIDTH/2, PLANE_HEIGHT/2, 0, 1, 1);
 			vertex(-PLANE_WIDTH/2, PLANE_HEIGHT/2, 0, 1, 0);
 		endShape(CLOSE);   
+		
+
 		/*
 		//	Move to the center of the ball
 		translate(BALL_ORBIT_RADIUS*cos(ballTheta_), BALL_ORBIT_RADIUS*sin(ballTheta_), BALL_RADIUS*0.7f);
@@ -454,7 +500,7 @@ public class Brickbreaker extends PApplet
 	}
 	
 	public static void main(String _args[]) {
-		PApplet.main("brickbreaker.Brickbreaker");
+		PApplet.main("brickbreaker.Data.brickbreaker.Brickbreaker");
 	}
 
 }

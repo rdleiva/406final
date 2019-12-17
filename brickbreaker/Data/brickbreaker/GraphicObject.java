@@ -1,4 +1,4 @@
-package brickbreaker;
+package brickbreaker.Data.brickbreaker;
 import processing.core.*;
 
 public abstract class GraphicObject {

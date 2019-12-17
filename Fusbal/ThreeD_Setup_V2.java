@@ -186,8 +186,20 @@ public class ThreeD_Setup_V2 extends PApplet
 
 		background(0);
 		
+		
+		
 		//	Move to the center of the image plane
 		translate(WINDOW_WIDTH/2, WINDOW_HEIGHT/2, 0);
+		
+		//axes
+		pushMatrix();
+		stroke(255,0,0);
+		line(0,0,0, 30,0,0);
+		stroke(0,255,0);
+		line(0,0,0, 0,30,0);
+		stroke(0,0,255);
+		line(0,0,0, 0,0,30);
+		popMatrix();
 		
 		rotateY(pan_);
 		rotateZ(roll_);
