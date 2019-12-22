@@ -1,5 +1,5 @@
 package brickbreaker.Data.brickbreaker;
-
+///////////////////////////////////////
 //Team: 		Eben Aceto
 //			Fehmina Hasan
 //			Rotman Daniel Leiva
@@ -10,6 +10,7 @@ package brickbreaker.Data.brickbreaker;
 //CSC406:		Computer Graphics
 //
 //Final Project: 	BrickBreaked3D
+///////////////////////////////////////
 
 import processing.core.PApplet;
 import processing.core.PImage;
