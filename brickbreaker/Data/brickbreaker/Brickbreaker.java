@@ -1,5 +1,16 @@
 package brickbreaker.Data.brickbreaker;
 
+//Team: 		Eben Aceto
+//			Fehmina Hasan
+//			Rotman Daniel Leiva
+//			John Motta
+//
+//Professor:	Hervé
+//
+//CSC406:		Computer Graphics
+//
+//Final Project: BrickBreaked3D
+
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.core.PShape;
@@ -18,17 +29,6 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-//Team: 			Eben Aceto
-//					Fehmina Hasan
-//					Rotman Daniel Leiva
-//					John Motta
-//		
-//Professor:		Hervé
-//
-//CSC406:			Computer Graphics
-//
-//Final Project: 	BrickBreaked3D
-	
 
 public class Brickbreaker extends PApplet 
 {
