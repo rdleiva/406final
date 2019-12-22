@@ -5,11 +5,11 @@ package brickbreaker.Data.brickbreaker;
 //			Rotman Daniel Leiva
 //			John Motta
 //
-//Professor:	Hervé
+//Professor:		Hervé
 //
 //CSC406:		Computer Graphics
 //
-//Final Project: BrickBreaked3D
+//Final Project: 	BrickBreaked3D
 
 import processing.core.PApplet;
 import processing.core.PImage;
