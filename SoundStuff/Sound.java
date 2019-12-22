@@ -1,4 +1,4 @@
-
+package SoundStuff;
 import sun.audio.*;
 import javax.swing.*;
 import java.awt.event.*;

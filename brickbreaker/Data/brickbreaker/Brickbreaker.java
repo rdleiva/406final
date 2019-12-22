@@ -18,27 +18,21 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-//	In 3D, a lot of the things we had to care about in 2D don't need to be
-//	defined explicitly anymore, but rather are going to be defined implicitly
-//	once you have defined your camera.
-//		In particular, the notions of conversion between pixel and world units,
-//	and even of "dimensions of the world," are implicitly defined by the choice
-//	of camera.  The XMIN, XMAX, YMIN, YMAX that we had to define in our 2D applications
-//	are now only relevant if you want object to bounce, or more generally have 
-//	some specific behavior when they reach the "edge of the world."  
-//		In this version, there are no constant that need to be available application-wide,
-//	and so I got rid of the ApplicationConstants interface and defined in this class
-//	all the constants that I needed.
+//Team: 			Eben Aceto
+//					Fehmina Hasan
+//					Rotman Daniel Leiva
+//					John Motta
+//		
+//Professor:		Hervé
+//
+//CSC406:			Computer Graphics
+//
+//Final Project: 	BrickBreaked3D
+	
 
 public class Brickbreaker extends PApplet 
 {
-	
-	private ArrayList<GraphicObject> brickList_;
-	
-	private GraphicObject ball_;
-	
-	private Bumper bump_;
-	
+
 	private enum CameraMode {
 		ORTHOGRAPHIC_CAM,
 		NORMAL_PERSPECTIVE_CAM,
@@ -112,7 +106,7 @@ public class Brickbreaker extends PApplet
 	 */		
 	private final float CAM_WIDTH = 50.f, CAM_HEIGHT = 50.f;
 	
-	private float XMIN = -PLANE_WIDTH/2, YMIN = -PLANE_HEIGHT/2, XMAX = PLANE_WIDTH/2, YMAX = PLANE_HEIGHT/2;
+//	private float XMIN = -PLANE_WIDTH/2, YMIN = -PLANE_HEIGHT/2, XMAX = PLANE_WIDTH/2, YMAX = PLANE_HEIGHT/2;
 	
 	/**	What camera are we using?
 	 * 
@@ -124,35 +118,50 @@ public class Brickbreaker extends PApplet
 	 */
 	private PImage planeTexture_;
 	
-	/**	Texture to map on the sphere
-	 * 
-	 */
-	private PImage ballTexture_;
-	
 	/** Toggle for ball animation
 	 * 
 	 */
 	private boolean animate_;
 	
-	private float ballTheta_;
+	/**	array to hold list of bricks
+	 * 
+	 */
+	private ArrayList<GraphicObject> brickList_;
 	
+	/**	ball graphic object
+	 * 
+	 */
+	private GraphicObject ball_;
+	
+	/**	bumper object to bounce ball
+	 * 
+	 */
+	private Bumper bump_;
+	
+	/**	
+	 * 
+	 */
 	private int lastTime_;
 	
-	private float [][][]sphereVertex_;
-	
-	final int SPHERE_RES = 16;
-	final float BALL_RADIUS = 3;
-	final float BALL_ORBIT_RADIUS = 15;
-	final float BALL_SPIN = PI/4;
-	
-	//		         Y            X            Z
+
+	/**	fixed start view y and z
+	 * 
+	 */
 	private float pan_ = -1.55f, tilt_, roll_ = 0.50f;
 	
+	/**	
+	 * 
+	 */
 	private boolean transl_ = false;
 	
-	//webcam 
+	/**	webcam variable
+	 * 
+	 */
 	Capture cam;
 	
+	/**	skyboxs boolean
+	 * 
+	 */
 	private final boolean skyboxyes_ = true;
 
 	/** Skybox variable
@@ -165,78 +174,63 @@ public class Brickbreaker extends PApplet
 	 */
 	private PImage gameOver_;
 	
+	/**	game over boolean
+	 * 
+	 */
 	private boolean gameOver = false;
 	
+	/**	number of rows and blocks per row variables
+	 * 
+	 */
+	int numRows = 50, blocksPerRow = 10;
+	
+	/**	size of block
+	 * 
+	 */
+	int blockSize = (int) PLANE_HEIGHT/blocksPerRow;
+	
+	/**	starting location in each row
+	 * 
+	 */
+	float rowStart = (float) blockSize/2;
+	
+	/**	application settings
+	 * 
+	 */
 	public void settings() 
 	{
 		//Initial Scene configuration
 		size(WINDOW_WIDTH, WINDOW_HEIGHT, P3D);
 	}
 
+	/**	application setup
+	 * 
+	 */
 	public void setup() 
 	{
-		if (skyboxyes_)
-			skybox = new Skybox(loadImage("space.jpg"));
-		else
-			skybox = null;
-		
 		// web cam list
 		String[] cameras = Capture.list();
 		
 		music();
-		
-		if (cameras.length == 0) {
-			println("There are no cameras available for capture.");
-			exit();
-		} 
-		
-		println("Available cameras:");
-		for (int i = 0; i < cameras.length; i++) {
-			println("\t" + cameras[i]);
-		}
 		    
 		// The camera can be initialized directly using an 
 		// element from the array returned by list():
 		cam = new Capture(this, cameras[0]);  
 		cam.start();
 		
-//		cameraMode_ = CameraMode.ORTHOGRAPHIC_CAM;
+		// cameraMode_ = CameraMode.ORTHOGRAPHIC_CAM;
 		cameraMode_ = CameraMode.NORMAL_PERSPECTIVE_CAM;
-//		cameraMode_ = CameraMode.WIDE_PERSPECTIVE_CAM;
+		// cameraMode_ = CameraMode.WIDE_PERSPECTIVE_CAM;
 		animate_ = false;
-		ballTheta_ = 0;
-		
+	
 		//Image loading section
+		skybox = new Skybox(loadImage("space.jpg"));
 		planeTexture_ = loadImage("space.jpg");
-		ballTexture_ = loadImage("ballpattern3.jpg");
 		gameOver_ = loadImage("gameover.jpg");
 		textureMode(NORMAL);
-		float azimuthStep = 2*PI/SPHERE_RES;
-		float elevationStep = PI/(SPHERE_RES+1);
-		//	I don't bother storing coordinates for the North and South poles.
-		//	(0, 0, rad, 0.5, 1) and (0, 0, -rad, 0.5, 0).
-		sphereVertex_ = new float[SPHERE_RES][SPHERE_RES][];
 
-		for (int i=0; i<SPHERE_RES; i++)
-		{
-			float elevationAngle = PI/2 - (i+1)*elevationStep;
-			float cosElev = cos(elevationAngle), sinElev = sin(elevationAngle);
-			for (int j=0; j<SPHERE_RES; j++)
-			{
-				float azimuthAngle = j*azimuthStep;
-				float cosAzim = cos(azimuthAngle), sinAzim = sin(azimuthAngle);
-				float []XYZuv = {BALL_RADIUS*cosAzim*cosElev, BALL_RADIUS*sinAzim*cosElev, BALL_RADIUS*sinElev,
-						1.f*j/SPHERE_RES, 1-(i+1.f)/(SPHERE_RES+1.f)};				
-				sphereVertex_[i][j] = XYZuv;
-			}			
-		}
-
-		// determine the number of bricks per row
-		int numRows = 50;
-		int blocksPerRow = 10;
 		brickList_ = new ArrayList<GraphicObject>(numRows*blocksPerRow);
-		int blockSize = (int) PLANE_HEIGHT/blocksPerRow;
-		float rowStart = (float) blockSize/2; // starting location in each row
+
 		// for each row
 		for(int i = 0; i < numRows; i++) 
 		{
@@ -247,13 +241,17 @@ public class Brickbreaker extends PApplet
 				brickList_.add(new Brick(xLoc+rowStart, yLoc+rowStart, (float)blockSize/2, blockSize, blockSize));
 			}
 		}
-
+		
 		ball_ = new Ball(0,0,blockSize/2, blockSize/2, blockSize/2);
 		bump_ = new Bumper(PLANE_WIDTH/3,0f,blockSize/2, blockSize/2, blockSize*2f);
+
 		setupCamera_();
 		lastTime_ = millis();
 	}
 
+	/**	camera setup
+	 * 
+	 */
 	private void setupCamera_()
 	{
 		switch (cameraMode_)
@@ -272,9 +270,11 @@ public class Brickbreaker extends PApplet
 		}
 	}
 	
-	public void draw() {
-		
-
+	/**	drawing
+	 * 
+	 */
+	public void draw() 
+	{		
 		background(0);
 		
 		if (skybox != null)
@@ -285,12 +285,10 @@ public class Brickbreaker extends PApplet
 		
 		rotateY(pan_);
 		rotateZ(roll_);
+		rotateX(tilt_);
 
 		//	I like my Z axis to indicate the vertical "up" direction
 		rotateX(PI/2);
-		
-//		rotateX(tilt_);
-
 
 		//	from now on we will be drawing in world units, but the lines
 		//	we draw should remain 1 pixel wide on screen
@@ -307,8 +305,7 @@ public class Brickbreaker extends PApplet
 			hint(ENABLE_DEPTH_TEST);
 		}
 
-
-		drawSurfaceAndBall_();
+		drawSurvaceAndCam_();
 		pushMatrix();
 		translate(-PLANE_WIDTH, 0, 32);
 		rotateY(PI/4);
@@ -326,8 +323,8 @@ public class Brickbreaker extends PApplet
 		
 		
 		// game over
-		if(gameOver) {
-			
+		if(gameOver) 
+		{
 			pushMatrix();
 			translate(PLANE_WIDTH/3, 0, PLANE_HEIGHT/2);
 			rotateY(PI);
@@ -342,8 +339,6 @@ public class Brickbreaker extends PApplet
 			vertex(-CAM_WIDTH, CAM_HEIGHT, 0, 1, 0);
 			endShape(CLOSE); 
 			popMatrix();
-			
-
 		}
 		
 		// show axes
@@ -373,10 +368,12 @@ public class Brickbreaker extends PApplet
 
 		// update objects
 		update_();
-		
 	}
 
-	void drawSurfaceAndBall_(){
+	/**	draw surface and ball
+	 * 
+	 */
+	void drawSurvaceAndCam_(){
 		
 		if (cam.available()) {
 			cam.read();
@@ -398,21 +395,12 @@ public class Brickbreaker extends PApplet
 			vertex(-PLANE_WIDTH/2, PLANE_HEIGHT/2, 0, 1, 0);
 		endShape(CLOSE);   
 		
-
-		/*
-		//	Move to the center of the ball
-		translate(BALL_ORBIT_RADIUS*cos(ballTheta_), BALL_ORBIT_RADIUS*sin(ballTheta_), BALL_RADIUS*0.7f);
-		rotateZ(ballTheta_);
-		noFill();
-		//stroke(255, 255, 0);
-		//fill(255, 255, 0);
-		//sphereDetail(32);
-		//sphere(BALL_RADIUS);
-		drawSphere_();
-		*/
 		popMatrix();
 	}
 	
+	/**	update
+	 * 
+	 */
 	private void update_() 
 	{
 		int time = millis();
@@ -426,7 +414,8 @@ public class Brickbreaker extends PApplet
 		for(int i = 0; i < brickList_.size();i++){
 			brickList_.get(i).update_(dt);
 			
-			if(brickList_.get(i).getX() >= bump_.getX()) {
+			if(brickList_.get(i).getX() >= bump_.getX()) 
+			{
 				gameOver = true;
 //				System.exit(0);
 			}
@@ -441,6 +430,7 @@ public class Brickbreaker extends PApplet
 				// (fix for a later time)
 				float yDiff = Math.abs(brickList_.get(i).getY() - ball_.getY());
 				float xDiff = Math.abs(brickList_.get(i).getX() - ball_.getX());
+				
 				if(yDiff < xDiff)
 				{
 					ball_.setvx(-1.0f * ball_.getvx());
@@ -466,11 +456,12 @@ public class Brickbreaker extends PApplet
 		
 		lastTime_ = time;
 		
-		
 		if(ball_.getX() >= bump_.getX()+10) gameOver = true; 
-		
 	}
 	
+	/**	keyboard 
+	 * 
+	 */
 	public void keyReleased()
 	{
 		switch(key)
@@ -521,19 +512,20 @@ public class Brickbreaker extends PApplet
 			case 'd':
 				roll_ -= 0.05f;
 				break;
-			case ',':
+			case ',':	// left move
 				if(bump_.getY() <= PLANE_HEIGHT/3)
 					bump_.moveLeft();
 				break;
-			case '.':
+			case '.':	// right move
 				if(bump_.getY() >= -PLANE_HEIGHT/3)
 					bump_.moveRight();
 				break;
-
-
 		}
 	}
 	
+	/**	music
+	 * 
+	 */
 	public void music() 
     {       
 		
@@ -554,19 +546,24 @@ public class Brickbreaker extends PApplet
             loop = new ContinuousAudioDataStream(AD);
 
         }
-        catch(FileNotFoundException e){
+        
+        catch(FileNotFoundException e)
+        {
         	//if music file isnt found
             System.out.print(e.toString());
         }
+        
         catch(IOException error)
         {
             System.out.print(error.toString());
         }
         //activates loop
         AP.start(loop);
-
     }
 	
+	/**	when block gets hit
+	 * 
+	 */
 	public static void blockHit() 
     {       
     	//Initializes all sound players/streamers/and data managers
@@ -586,10 +583,13 @@ public class Brickbreaker extends PApplet
             //loop = new ContinuousAudioDataStream(AD);
 
         }
-        catch(FileNotFoundException e){
+        
+        catch(FileNotFoundException e)
+        {
         	//if music file isnt found
             System.out.print(e.toString());
         }
+        
         catch(IOException error)
         {
             System.out.print(error.toString());
@@ -598,6 +598,9 @@ public class Brickbreaker extends PApplet
         //AP.start(loop);
     }
 	
+	/**	main app
+	 * 
+	 */
 	public static void main(String _args[]) {
 		PApplet.main("brickbreaker.Data.brickbreaker.Brickbreaker");
 	}

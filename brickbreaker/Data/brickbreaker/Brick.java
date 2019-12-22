@@ -9,7 +9,7 @@ public class Brick extends GraphicObject{
 									   y_ - width/2, y_ + width/2,
 									   z_ - width/2, z_+ width/2,
 									   0);
-		vx_ = .50f;
+		vx_ = 0.5f;
 	}
 
 	
