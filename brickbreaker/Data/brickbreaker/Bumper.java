@@ -8,7 +8,14 @@ public class Bumper extends GraphicObject{
 	// how much does the bumper move left and right from a single button press
 	private float moveDist_ = 5.0f;
 	
-	
+	/** Bumper constructor
+	 * 
+	 * @param x initial x location
+	 * @param y initial y location
+	 * @param z initial z location
+	 * @param width object width
+	 * @param height object height
+	 */
 	public Bumper(float x, float y, float z, float width, float height)
 	{
 		super(x,y,z,width,height);

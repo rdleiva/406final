@@ -1,7 +1,20 @@
 package brickbreaker.Data.brickbreaker;
 import processing.core.*;
 
+/** Brick class for the breaker game
+ * 
+ *
+ */
 public class Brick extends GraphicObject{
+	
+	/** Brick constructor
+	 * 
+	 * @param x initial x location
+	 * @param y initial y location
+	 * @param z initial z location
+	 * @param width brick width
+	 * @param height brick height
+	 */
 	public Brick(float x, float y, float z, float width, float height)
 	{
 		super(x,y,z,width,height);
@@ -9,6 +22,7 @@ public class Brick extends GraphicObject{
 									   y_ - width/2, y_ + width/2,
 									   z_ - width/2, z_+ width/2,
 									   0);
+		// rate at which bricks descend towards the player
 		vx_ = 0.5f;
 	}
 
